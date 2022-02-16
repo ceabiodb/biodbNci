@@ -1,8 +1,3 @@
-# vi: fdm=marker ts=4 et cc=80 tw=80
-
-# Test NCI CACTUS wsChemicalIdentifierResolver() {{{1
-################################################################
-
 test.nci.cactus.wsChemicalIdentifierResolver <- function(conn) {
 
     # Plain
@@ -31,9 +26,6 @@ test.nci.cactus.wsChemicalIdentifierResolver <- function(conn) {
     testthat::expect_equal(res, 'InChI=1/CH2O/c1-2/h1H2')
 }
 
-# Test convCasToInchi() {{{1
-################################################################
-
 test.nci.cactus.convCasToInchi <- function(conn) {
     
     cas2inchi <-
@@ -48,9 +40,6 @@ test.nci.cactus.convCasToInchi <- function(conn) {
     testthat::expect_is(inchi, 'character')
     testthat::expect_identical(inchi, unname(cas2inchi))
 }
-
-# Test convCasToInchikey() {{{1
-################################################################
 
 test.nci.cactus.convCasToInchikey <- function(conn) {
     
@@ -68,12 +57,26 @@ test.nci.cactus.convCasToInchikey <- function(conn) {
     testthat::expect_identical(inchikey, unname(cas2inchikey))
 }
 
-# Main {{{1
-################################################################
+# Set test context
+biodb::testContext("Example tests")
 
+# Instantiate Biodb
+biodb <- biodb::createBiodbTestInstance(ack=TRUE)
+
+# Load package definitions
+defFile <- system.file("definitions.yml", package='biodbNci')
+biodb$loadDefinitions(defFile)
+
+# Create connector
+conn <- biodb$getFactory()$createConn('nci.cactus')
+
+# Run tests
 biodb::testThat('Web service wsChemicalIdentifierResolver works fine.',
           test.nci.cactus.wsChemicalIdentifierResolver, conn=conn)
 biodb::testThat('convCasToInchi() works fine.',
           test.nci.cactus.convCasToInchi, conn=conn)
 biodb::testThat('convCasToInchikey() works fine.',
           test.nci.cactus.convCasToInchikey, conn=conn)
+
+# Terminate Biodb
+biodb$terminate()
