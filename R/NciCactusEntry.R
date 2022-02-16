@@ -26,23 +26,4 @@
 NciCactusEntry <- R6::R6Class("NciCactusEntry",
     inherit=
         biodb::BiodbSdfEntry
-    ,
-
-public=list(
-
-initialize=function(...) {
-    super$initialize(...)
-}
-
-,doCheckContent=function(content) {
-    
-    # You can do some more checks of the content here.
-    
-    return(TRUE)
-}
-
-,doParseFieldsStep2=function(parsed.content) {
-    
-    # TODO Implement your custom parsing processing here.
-}
-))
+)

@@ -1,6 +1,6 @@
 Package: biodbNci
 Title: biodbNci, a library for connecting to biodbNci, a library for connecting
-to the National Cancer Institute (USA) CACTUS Database.
+    to the National Cancer Institute (USA) CACTUS Database.
 Version: 0.99.0
 Authors@R: 
     c(person(given = "Pierrick",
@@ -9,9 +9,9 @@ Authors@R:
              email = "pierrick.roger@cea.fr")
       )
 Description: The biodbNci library is an extension of the biodb framework
-package, that provides access to biodbNci, a library for connecting to the
-National Cancer Institute (USA) CACTUS Database. It allows to retrieve entries
-by their accession number, and run specific web services.
+    package, that provides access to biodbNci, a library for connecting to the
+    National Cancer Institute (USA) CACTUS Database. It allows to retrieve
+    entries by their accession number, and run specific web services.
 License: AGPL-3
 biocViews: Software, Infrastructure, DataImport
 VignetteBuilder: knitr
@@ -33,7 +33,7 @@ Suggests:
     covr,
     lgr
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 Collate: 
     'NciCactusConn.R'
     'NciCactusEntry.R'
