@@ -1,100 +1,75 @@
-# vi: fdm=marker ts=4 et cc=80 tw=80
-
-# NciCactusConn {{{1
-################################################################################
-
-# Declaration {{{2
-################################################################################
-
-#' NCI CACTUS connector class.
+#' biodbNci, a library for connecting to the National Cancer Institute (USA)
+#' CACTUS Database. connector class.
+#'
+#' Connector class for biodbNci, a library for connecting to the National
+#' Cancer Institute (USA) CACTUS Database.
 #'
 #' This class implements a connector for accessing the NCI database, using
 #' CACTUS services.  See https://www.cancer.gov/ and
 #' https://cactus.nci.nih.gov/.
 #'
+#' @seealso \code{\link{BiodbConn}}.
+#'
 #' @examples
 #' # Create an instance with default settings:
 #' mybiodb <- biodb::Biodb()
 #'
-#' # Create a connector
+#' # Get a connector:
 #' conn <- mybiodb$getFactory()$createConn('nci.cactus')
 #'
-#' # Get an entry
+#' # Get the first entry
 #' e <- conn$getEntry('749674')
 #'
 #' # Terminate instance.
 #' mybiodb$terminate()
 #'
-#' @include BiodbRemotedbConn.R
-#' @include BiodbDownloadable.R
-#' @export NciCactusConn
-#' @exportClass NciCactusConn
-NciCactusConn <- methods::setRefClass("NciCactusConn",
-    contains=c("BiodbRemotedbConn", "BiodbDownloadable"),
+#' @import biodb
+#' @import R6
+#' @export
+NciCactusConn <- R6::R6Class("NciCactusConn",
+inherit=biodb::BiodbConn,
 
-# Public methods {{{2
-################################################################################
+public=list(
 
-methods=list(
+#' @description
+#' New instance initializer. Connector classes must not be instantiated
+#' directly. Instead, you must use the createConn() method of the factory class.
+#' @param ... All parameters are passed to the super class initializer.
+#' @return Nothing.
+initialize=function(...) {
+    super$initialize(...)
+}
 
-# Get nb entries {{{3
-################################################################################
-
-getNbEntries=function(count=FALSE) {
-    # Overrides super class' method.
-
-    n <- NA_integer_
-
-    ids <- .self$getEntryIds()
-    if ( ! is.null(ids))
-        n <- length(ids)
-
-    return(n)
-},
-
-# Get entry page url {{{3
-################################################################################
-
-getEntryPageUrl=function(id) {
-    # Overrides super class' method.
-
-    return(rep(NA_character_, length(id)))
-},
-
-
-# Web service Chemical Identifier Resolver {{{3
-################################################################################
-
-wsChemicalIdentifierResolver=function(structid, repr, xml=FALSE,
-                                      retfmt=c('plain', 'parsed', 'request',
-                                               'ids')) {
-    ":\n\nCalls Chemical Identifier Resolver web service.
-    See https://cactus.nci.nih.gov/chemical/structure_documentation for details.
-    \nstructid: The submitted structure identifier.
-    \nrepr: The wanted representation.
-    \nxml: A flag for choosing the format returned by the web service between
-    plain text and XML.
-    \nretfmt: Use to set the format of the returned value. 'plain' will return
-    the raw results from the server, as a character value. 'parsed' will return
-    the parsed results, as an XML object. 'request' will return a BiodbRequest
-    object representing the request as it would have been sent. 'ids' will
-    return a character vector containing the IDs of the matching entries.
-    \nReturned value: Depending on `retfmt` parameter.
-    "
+#' @description
+#' Calls Chemical Identifier Resolver web service.
+#' See https://cactus.nci.nih.gov/chemical/structure_documentation for details.
+#' @param structid The submitted structure identifier.
+#' @param repr The wanted representation.
+#' @param xml: A flag for choosing the format returned by the web service
+#' between plain text and XML.
+#' @param retfmt Use to set the format of the returned value. 'plain' will
+#' return the raw results from the server, as a character value. 'parsed' will
+#' return the parsed results, as an XML object. 'request' will return a
+#' BiodbRequest object representing the request as it would have been sent.
+#' 'ids' will return a character vector containing the IDs of the matching
+#' entries.
+#' @return Depending on `retfmt` parameter.
+,wsChemicalIdentifierResolver=function(structid, repr, xml=FALSE,
+    retfmt=c('plain', 'parsed', 'ids', 'request')) {
 
     retfmt <- match.arg(retfmt)
     
     # Build request
-    url <- c(.self$getPropValSlot('urls', 'ws.url'), 'chemical', 'structure',
+    url <- c(self$getPropValSlot('urls', 'ws.url'), 'chemical', 'structure',
              structid, repr)
     if (xml)
         url <- c(url, 'xml')
-    request <- .self$makeRequest(method='get', url=BiodbUrl(url=url))
+    request <- self$makeRequest(method='get', url=BiodbUrl$new(url=url))
     if (retfmt == 'request')
         return(request)
 
     # Send request
-    results <- .self$getBiodb()$getRequestScheduler()$sendRequest(request)
+    results <- self$getBiodb()$getRequestScheduler()$sendRequest(request)
 
     # Parse
     if (retfmt != 'plain' && xml) {
@@ -111,121 +86,170 @@ wsChemicalIdentifierResolver=function(structid, repr, xml=FALSE,
     }
 
     return(results)
-},
+}
 
-# Convert a list of IDs into another {{{3
-################################################################################
-
-conv=function(ids, repr) {
-    ":\n\nCalls wsChemicalIdentifierResolver() to convert a list of IDs into
-    another representation.
-    \nids: A character vector containing IDs.
-    \nrepr: The targeted representation.
-    \nReturned value: A character vector, the same length as `ids`, containing
-    the converted IDs. NA values will be set when conversion is not possible.
-    "
+#' @description
+#' Calls wsChemicalIdentifierResolver() to convert a list of IDs into
+#' another representation.
+#' @param ids A character vector containing IDs.
+#' @param repr The targeted representation.
+#' @return A character vector, the same length as `ids`, containing
+#' the converted IDs. NA values will be set when conversion is not possible.
+,conv=function(ids, repr) {
     
     res <- character()
     msg <- paste0('Converting IDs to ', repr)
     
     # Loop on all IDs
-    i <- 0
+    prg <- biodb::Progress$new(biodb=self$getBiodb(), msg=msg,
+        total=length(ids))
     for (id in ids) {
-        r <- .self$wsChemicalIdentifierResolver(structid=id, repr=repr,
-                                                xml=TRUE, retfmt='ids')
+        r <- self$wsChemicalIdentifierResolver(structid=id, repr=repr,
+            xml=TRUE, retfmt='ids')
         if (length(r) == 0)
             r <- NA_character_
         
         res <- c(res, r)
         
         # Send progress message
-        i <- i + 1
-        .self$progressMsg(msg=msg, index=i, total=length(ids), first=(i == 1))
+        prg$increment()
     }
     
     return(res)
-},
+}
 
-# Convert CAS ID to InChI {{{3
-################################################################################
+#' @description
+#' Converts a list of CAS IDs into a list of InChI.
+#' @param cas A character vector containing CAS IDs.
+#' @return A character vector, the same length as `ids`, containing InChI
+#' values or NA values where conversion was not possible.
+,convCasToInchi=function(cas) {
+return(self$conv(cas, 'InChI'))
+}
 
-convCasToInchi=function(cas) {
-    ":\n\nConverts a list of CAS IDs into a list of InChI.
-    \ncas: A character vector containing CAS IDs.
-    \nReturned value: A character vector, the same length as `ids`, containing InChI values or NA values where conversion was not possible.
-    "
+#' @description
+#' Converts a list of CAS IDs into a list of InChI keys.
+#' @param cas A character vector containing CAS IDs.
+#' @return A character vector, the same length as `ids`, containing InChI Key
+#' values or NA values where conversion was not possible.
+,convCasToInchikey=function(cas) {
     
-    return(.self$conv(cas, 'InChI'))
-},
-
-# Convert CAS ID to InChI KEY {{{3
-################################################################################
-
-convCasToInchikey=function(cas) {
-    ":\n\nConverts a list of CAS IDs into a list of InChI keys.
-    \ncas: A character vector containing CAS IDs.
-    \nReturned value: A character vector, the same length as `ids`, containing InChI Key values or NA values where conversion was not possible.
-    "
-    
-    inchikey <- .self$conv(cas, 'InChIKEY')
+    inchikey <- self$conv(cas, 'InChIKEY')
     inchikey <- sub('^InChIKey=', '', inchikey)
                     
     return(inchikey)
-},
+}
 
-# Requires download {{{3
-################################################################################
+),
 
-requiresDownload=function() {
-    # Overrides super class' method.
+private=list(
 
-    return(TRUE)
-},
+doGetNbEntries=function(count=FALSE) {
 
-# Get entry content from database {{{3
-################################################################################
+    # Replace the call below if you have a direct way (specific web service for
+    # a remote database, provided method or information for a local database)
+    # to count entries for your database.
+    return(callSuper(count=count))
+}
 
-getEntryContentFromDb=function(entry.id) {
-    # Overrides super class' method.
+,doGetEntryContentFromDb=function(id) {
 
     # Initialize return values
-    content <- rep(NA_character_, length(entry.id))
+    content <- rep(NA_character_, length(id))
+
+    # TODO Implement retrieval of entry contents.
+
+    # Some debug message
+    if (length(content) > 0)
+        biodb::logDebug0("Content of first entry: ", content[[1]])
 
     return(content)
-},
+}
 
-# Private methods {{{2
-################################################################################
+,doGetEntryIds=function(max.results=NA_integer_) {
+    # Overrides super class' method.
 
-# Do download {{{3
-################################################################################
+    ids <- NA_character_
+ 
+    # Download
+    self$download()
 
-.doDownload=function() {
-    url <- c(.self$getPropValSlot('urls', 'dwnld.url'),
-             'NCI-Open_2012-05-01.sdf.gz')
-    gz.url <- BiodbUrl(url=url)
-    sched <- .self$getBiodb()$getRequestScheduler()
-    sched$downloadFile(url=gz.url, dest.file=.self$getDownloadPath())
-},
+    # Get IDs from cache
+    cch <- self$getBiodb()$getPersistentCache()
+    ids <- cch$listFiles(self$getCacheId(),
+                         ext=self$getPropertyValue('entry.content.type'),
+                         extract.name=TRUE)
+    
+    return(ids)
+}
 
-# Do extract download {{{3
-################################################################################
+,doSearchForEntries=function(fields=NULL, max.results=NA_integer_) {
+    # Overrides super class' method.
 
-.doExtractDownload=function() {
+    ids <- character()
 
+    # TODO Implement search of entries by filtering on values of fields.
+    
+    return(ids)
+}
+
+,doGetEntryContentRequest=function(id, concatenate=TRUE) {
+
+    # TODO Modify the code below to build the URLs to get the contents of the
+    # entries.
+    # Depending on the database, you may have to build one URL for each
+    # individual entry or may be able to write just one or a few URL for all
+    # entries to retrieve.
+    u <- c(self$getPropValSlot('urls', 'base.url'), 'entries',
+           paste(id, 'xml', sep='.'))
+    url <- BiodbUrl$new(url=u)$toString()
+
+    return(url)
+}
+
+,doGetEntryPageUrl=function(id) {
+    return(rep(NA_character_, length(id)))
+}
+
+,doGetEntryImageUrl=function(id) {
+    return(rep(NA_character_, length(id)))
+}
+
+,doDownload=function() {
+
+    biodb::logInfo("Downloading biodbNci, a library for connecting to the National Cancer Institute (USA) CACTUS Database....")
+
+    # TODO Build the URL to the file to download
+    fileUrl <- c(self$getPropValSlot('urls', 'dwnld.url'),
+           'NCI-Open_2012-05-01.sdf.gz')
+    
+    # Transform it intoa biodb URL object
+    fileUrl <- BiodbUrl$new(url=fileUrl)
+
+    # Download the file using the biodb scheduler
+    biodb::logInfo0("Downloading \"", fileUrl$toString(), "\"...")
+    sched <- self$getBiodb()$getRequestScheduler()
+    sched$downloadFile(url=fileUrl, dest.file=self$getDownloadPath())
+}
+
+,doExtractDownload=function() {
+
+    biodb::logInfo0("Extracting content of downloaded biodbNci, a library for connecting to the National Cancer Institute (USA) CACTUS Database....")
+    cch <- self$getBiodb()$getPersistentCache()
+ 
     # Open compressed file
-    fd <- gzfile(.self$getDownloadPath(), 'r')
-
-    # Remove current entry files
-    cch <- .self$getBiodb()$getPersistentCache()
-    ect <- .self$getPropertyValue('entry.content.type')
-    cch$deleteFiles(.self$getCacheId(), ext=ect)
+    fd <- gzfile(self$getDownloadPath(), 'r')
+ 
+    # Delete existing cache files
+    biodb::logDebug('Delete existing entry files in cache system.')
+    ect <- self$getPropertyValue('entry.content.type')
+    cch$deleteFiles(self$getCacheId(), ext=ect)
 
     # Read all file content,
     # and extract all individual SDF files.
     content <- character()
-    i <- 0
     msg <- 'Extracting NCI CACTUS SDF entry files'
+    prg <- biodb::Progress$new(biodb=self$getBiodb(), msg=msg)
     while(TRUE) {
 
         # Read one line
@@ -238,37 +262,16 @@ getEntryContentFromDb=function(entry.id) {
         
         # End of individual file
         if (line == '$$$$') {
-            id <- as.integer(content[[1]])
+            id <- as.character(as.integer(content[[1]]))
             content <- paste(content, collapse="\n")
-            cch$saveContentToFile(content, cache.id=.self$getCacheId(),
+            cch$saveContentToFile(content, cache.id=self$getCacheId(),
                                   name=id, ext=ect)
             content <- character()
-            i <- i + 1
-            .self$progressMsg(msg=msg, index=i, first=(i == 1))
+            prg$increment()
         }
     }
 
     # Close file
     close(fd)
-},
-
-# Get entry ids {{{3
-################################################################################
-
-.doGetEntryIds=function(max.results=NA_integer_) {
-
-    ids <- NULL
-
-    # Download
-    .self$download()
-
-    # Get IDs from cache
-    cch <- .self$getBiodb()$getPersistentCache()
-    ids <- cch$listFiles(.self$getCacheId(),
-                         ext=.self$getPropertyValue('entry.content.type'),
-                         extract.name=TRUE)
-
-    return(ids)
 }
-
 ))
