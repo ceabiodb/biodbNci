@@ -1,0 +1,20 @@
+email: pierrick.roger@cea.fr
+dbName: nci.cactus
+dbTitle: biodbNci, a library for connecting to the National Cancer Institute (USA)
+  CACTUS Database.
+firstname: Pierrick
+lastname: Roger
+newPkg: yes
+connType: compound
+entryType: sdf
+remote: yes
+downloadable: yes
+makefile: yes
+githubRepos: pkrog/biodbNci
+pkgName: biodbNci
+pkgLicense: AGPL-3
+editable: no
+writable: no
+travis: no
+rcpp: no
+vignetteName: biodbNci

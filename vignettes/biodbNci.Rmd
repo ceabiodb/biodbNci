@@ -1,0 +1,101 @@
+---
+title: "An introduction to biodbNci"
+author: "Pierrick Roger"
+date: "`r BiocStyle::doc_date()`"
+package: "`r BiocStyle::pkg_ver('biodbNci')`"
+abstract: |
+  How to use the NCI CACTUS connector and its methods.
+vignette: |
+  %\VignetteIndexEntry{Introduction to the biodbNci package.}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+output:
+  BiocStyle::html_document:
+    toc: yes
+    toc_depth: 4
+    toc_float:
+      collapsed: false
+  BiocStyle::pdf_document: default
+---
+
+# Purpose
+
+biodbNci is a *biodb* extension package that implements a connector to
+biodbNci, a library for connecting to the National Cancer Institute (USA)
+CACTUS Database.
+
+# Initialization
+
+The first step in using *biodbNci*, is to create an instance of the biodb
+class `Biodb` from the main *biodb* package. This is done by calling the
+constructor of the class:
+```{r, results='hide'}
+mybiodb <- biodb::Biodb()
+```
+During this step the configuration is set up, the cache system is initialized
+and extension packages are loaded.
+
+We will see at the end of this vignette that the *biodb* instance needs to be
+terminated with a call to the `terminate()` method.
+
+# Creating a connector to CACTUS
+
+In *biodb* the connection to a database is handled by a connector instance that
+you can get from the factory.
+biodbNci implements a connector to a remote database.
+Here is the code to instantiate a connector:
+```{r}
+conn <- mybiodb$getFactory()$createConn('nci.cactus')
+```
+
+# Accessing entries
+
+To get the number of entries stored inside the database, run:
+```{r}
+conn$getNbEntries()
+```
+
+To get some of the first entry IDs (accession numbers) from the database, run:
+```{r}
+ids <- conn$getEntryIds(2)
+ids
+```
+
+To retrieve entries, use:
+```{r}
+entries <- conn$getEntry(ids)
+entries
+```
+
+To convert a list of entries into a dataframe, run:
+```{r}
+x <- mybiodb$entriesToDataframe(entries)
+x
+```
+
+# Chemical Identifier Resolver web service
+
+Here is an example of calling the Chemical Identifier Resolver for converting a
+SMILES into an InChI:
+```{r}
+conn$wsChemicalIdentifierResolver(structid='C=O', repr='InChI')
+```
+
+# Convert CAS IDs
+
+There are currently two methods in NCI CACTUS for converting from CAS IDs to
+InChI or InChI keys:
+```{r}
+conn$convCasToInchi('87605-72-9')
+conn$convCasToInchikey('87605-72-9')
+```
+
+The conversion is made thanks to the Chemical Identifier Resolver web service.
+
+# Closing biodb instance
+
+When done with your *biodb* instance you have to terminate it, in order to
+ensure release of resources (file handles, database connection, etc):
+```{r}
+mybiodb$terminate()
+```
