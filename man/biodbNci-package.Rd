@@ -4,7 +4,7 @@
 \name{biodbNci-package}
 \alias{biodbNci}
 \alias{biodbNci-package}
-\title{biodbNci: biodbNci, a library for connecting to biodbNci, a library for connecting to the National Cancer Institute (USA) CACTUS Database.}
+\title{biodbNci: biodbNci, a library for connecting to biodbNci, a library for connecting to the National Cancer Institute (USA) CACTUS Database}
 \description{
 The biodbNci library is an extension of the biodb framework package, that provides access to biodbNci, a library for connecting to the National Cancer Institute (USA) CACTUS Database. It allows to retrieve entries by their accession number, and run specific web services.
 }

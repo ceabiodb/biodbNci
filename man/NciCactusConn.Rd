@@ -21,13 +21,15 @@ https://cactus.nci.nih.gov/.
 }
 \examples{
 # Create an instance with default settings:
-mybiodb <- biodb::Biodb()
+mybiodb <- biodb::newInst()
 
 # Get a connector:
 conn <- mybiodb$getFactory()$createConn('nci.cactus')
 
 # Get the first entry
+\donttest{ # Getting one entry requires the download of the whole database.
 e <- conn$getEntry('749674')
+}
 
 # Terminate instance.
 mybiodb$terminate()

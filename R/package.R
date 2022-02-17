@@ -9,6 +9,7 @@
 #'
 #' @import biodb
 #' @import Rcpp
+#' @import chk
 #' @importFrom Rcpp evalCpp
 #' @useDynLib biodbNci, .registration=TRUE
 "_PACKAGE"
