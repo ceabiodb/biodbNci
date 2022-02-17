@@ -45,7 +45,7 @@ initialize=function(...) {
 #' See https://cactus.nci.nih.gov/chemical/structure_documentation for details.
 #' @param structid The submitted structure identifier.
 #' @param repr The wanted representation.
-#' @param xml: A flag for choosing the format returned by the web service
+#' @param xml A flag for choosing the format returned by the web service
 #' between plain text and XML.
 #' @param retfmt Use to set the format of the returned value. 'plain' will
 #' return the raw results from the server, as a character value. 'parsed' will
@@ -234,44 +234,34 @@ doGetNbEntries=function(count=FALSE) {
 
 ,doExtractDownload=function() {
 
-    biodb::logInfo0("Extracting content of downloaded biodbNci, a library for connecting to the National Cancer Institute (USA) CACTUS Database....")
+    biodb::logInfo0("Extracting content of downloaded biodbNci, a library for ",
+        "connecting to the National Cancer Institute (USA) CACTUS Database....")
     cch <- self$getBiodb()$getPersistentCache()
+    txtfile <- "cactus_rdfs"
  
-    # Open compressed file
+    # Expand compressed file
+    extract.dir <- cch$getTmpFolderPath()
     fd <- gzfile(self$getDownloadPath(), 'r')
+    writeLines(readLines(fd), txtfile) # TODO To improve, takes more than 60min.
+    close(fd)
  
     # Delete existing cache files
     biodb::logDebug('Delete existing entry files in cache system.')
     ect <- self$getPropertyValue('entry.content.type')
     cch$deleteFiles(self$getCacheId(), ext=ect)
 
-    # Read all file content,
-    # and extract all individual SDF files.
-    content <- character()
-    msg <- 'Extracting NCI CACTUS SDF entry files'
-    prg <- biodb::Progress$new(biodb=self$getBiodb(), msg=msg)
-    while(TRUE) {
+    # Extract entries
+    biodb::logDebug0('Extract single entries from downloaded file "', txtfile,
+        '", into "', extract.dir, '".')
+    entryFiles <- extractEntries(normalizePath(txtfile),
+        normalizePath(extract.dir))
 
-        # Read one line
-        line <- readLines(fd, n=1)
-        if (length(line) == 0)
-            break
-        
-        # Store line
-        content <- c(content, line)
-        
-        # End of individual file
-        if (line == '$$$$') {
-            id <- as.character(as.integer(content[[1]]))
-            content <- paste(content, collapse="\n")
-            cch$saveContentToFile(content, cache.id=self$getCacheId(),
-                                  name=id, ext=ect)
-            content <- character()
-            prg$increment()
-        }
-    }
+    # Move extracted files into cache
+    cch$moveFilesIntoCache(unname(entryFiles), cache.id=self$getCacheId(),
+        name=names(entryFiles), ext=ect)
 
-    # Close file
-    close(fd)
+    # Remove extracted XML database file
+    biodb::logDebug('Delete extracted database.')
+    unlink(txt_file)
 }
 ))

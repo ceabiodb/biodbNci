@@ -16,5 +16,5 @@ pkgLicense: AGPL-3
 editable: no
 writable: no
 travis: no
-rcpp: no
+rcpp: yes
 vignetteName: biodbNci

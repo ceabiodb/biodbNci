@@ -196,15 +196,15 @@ See https://cactus.nci.nih.gov/chemical/structure_documentation for details.
 
 \item{\code{repr}}{The wanted representation.}
 
+\item{\code{xml}}{A flag for choosing the format returned by the web service
+between plain text and XML.}
+
 \item{\code{retfmt}}{Use to set the format of the returned value. 'plain' will
 return the raw results from the server, as a character value. 'parsed' will
 return the parsed results, as an XML object. 'request' will return a
 BiodbRequest object representing the request as it would have been sent.
 'ids' will return a character vector containing the IDs of the matching
 entries.}
-
-\item{\code{xml:}}{A flag for choosing the format returned by the web service
-between plain text and XML.}
 }
 \if{html}{\out{</div>}}
 }

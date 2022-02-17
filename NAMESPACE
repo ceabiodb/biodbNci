@@ -3,4 +3,7 @@
 export(NciCactusConn)
 export(NciCactusEntry)
 import(R6)
+import(Rcpp)
 import(biodb)
+importFrom(Rcpp,evalCpp)
+useDynLib(biodbNci)
