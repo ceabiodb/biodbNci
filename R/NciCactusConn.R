@@ -144,15 +144,7 @@ return(self$conv(cas, 'InChI'))
 
 private=list(
 
-doGetNbEntries=function(count=FALSE) {
-
-    # Replace the call below if you have a direct way (specific web service for
-    # a remote database, provided method or information for a local database)
-    # to count entries for your database.
-    return(callSuper(count=count))
-}
-
-,doGetEntryContentFromDb=function(id) {
+doGetEntryContentFromDb=function(id) {
 
     # Initialize return values
     content <- rep(NA_character_, length(id))
@@ -217,26 +209,27 @@ doGetNbEntries=function(count=FALSE) {
 
 ,doDownload=function() {
 
-    biodb::logInfo("Downloading biodbNci, a library for connecting to the National Cancer Institute (USA) CACTUS Database....")
-
-    print("================================ doDownload 1")
-    # TODO Build the URL to the file to download
-    fileUrl <- self$getPropValSlot('urls', 'db.gz.url')
-    print("================================ doDownload 2")
-    print(fileUrl)
+    # Build the URL to the file to download
+    u <- self$getPropValSlot('urls', 'db.gz.url')
+    biodb::logInfo('Downloading NCI CACTUS database at "%s" ...', u)
+    cch <- self$getBiodb()$getPersistentCache()
     
-    # Transform it intoa biodb URL object
-    fileUrl <- BiodbUrl$new(url=fileUrl)
-    print("================================ doDownload 3")
-    print(fileUrl)
-
-    # Download the file using the biodb scheduler
-    biodb::logInfo0("Downloading \"", fileUrl$toString(), "\"...")
-    print("================================ doDownload 10")
-    sched <- self$getBiodb()$getRequestScheduler()
-    print("================================ doDownload 11")
-    sched$downloadFile(url=fileUrl, dest.file=self$getDownloadPath())
-    print("================================ doDownload 12")
+    # Real URL
+    if (grepl('^([a-zA-Z]+://)', u)) {
+        ext <- self$getPropertyValue('dwnld.ext')
+        tmpFile <- tempfile("nci.cactus", tmpdir=cch$getTmpFolderPath(),
+            fileext=ext)
+        gz.url <- BiodbUrl$new(url=u)
+        sched <- self$getBiodb()$getRequestScheduler()
+        sched$downloadFile(url=gz.url, dest.file=tmpFile)
+        self$setDownloadedFile(tmpFile, action='move')
+        
+    # Path to local file
+    } else {
+        if ( ! file.exists(u))
+            biodb::error("Source file %s does not exist.", u)
+        self$setDownloadedFile(u, action='copy')
+    }
 }
 
 ,doExtractDownload=function() {
@@ -244,7 +237,6 @@ doGetNbEntries=function(count=FALSE) {
     biodb::logInfo0("Extracting content of downloaded biodbNci, a library for ",
         "connecting to the National Cancer Institute (USA) CACTUS Database....")
     cch <- self$getBiodb()$getPersistentCache()
-    print("================================ doExtractDownload 1")
  
     # Expand compressed file
     extract.dir <- cch$getTmpFolderPath()
@@ -252,29 +244,24 @@ doGetNbEntries=function(count=FALSE) {
     fd <- gzfile(self$getDownloadPath(), 'r')
     writeLines(readLines(fd), txtfile) # TODO To improve, takes more than 60min.
     close(fd)
-    print("================================ doExtractDownload 2")
  
     # Delete existing cache files
     biodb::logDebug('Delete existing entry files in cache system.')
     ect <- self$getPropertyValue('entry.content.type')
     cch$deleteFiles(self$getCacheId(), ext=ect)
-    print("================================ doExtractDownload 3")
 
     # Extract entries
     biodb::logDebug0('Extract single entries from downloaded file "', txtfile,
         '", into "', extract.dir, '".')
     entryFiles <- extractEntries(normalizePath(txtfile),
         normalizePath(extract.dir))
-    print("================================ doExtractDownload 4")
 
     # Move extracted files into cache
     cch$moveFilesIntoCache(unname(entryFiles), cache.id=self$getCacheId(),
         name=names(entryFiles), ext=ect)
-    print("================================ doExtractDownload 5")
 
     # Remove extracted XML database file
     biodb::logDebug('Delete extracted database.')
-    unlink(txt_file)
-    print("================================ doExtractDownload 6")
+    unlink(txtfile)
 }
 ))

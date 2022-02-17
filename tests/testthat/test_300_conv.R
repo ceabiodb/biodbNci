@@ -30,7 +30,7 @@ test.nci.cactus.convCasToInchikey <- function(conn) {
 }
 
 # Set test context
-biodb::testContext("Tests of web services")
+biodb::testContext("Tests of conversion functions")
 
 source('gz_builder.R')
 

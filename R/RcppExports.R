@@ -6,6 +6,6 @@
 NULL
 
 extractEntries <- function(file, extractDir) {
-    .Call('_biodbNci_extractEntries', PACKAGE = 'biodbNci', file, extractDir)
+    .Call(`_biodbNci_extractEntries`, file, extractDir)
 }
 

@@ -59,8 +59,12 @@ Rcpp::StringVector extractEntries(const std::string& file,
             
             // Check
             for (char const &c: entry_id)
-                if (c < '0' || c > '9')
-                    Rcpp::stop("Wrong format for entry ID.");
+                if (c < '0' || c > '9') {
+                    std::ostringstream msg;
+                    msg << "Wrong entry ID \"" << entry_id << "\"."
+                        << " It should only contain digits.";
+                    Rcpp::stop(msg.str().c_str());
+                }
         }
 
         // Close file

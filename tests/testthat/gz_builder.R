@@ -18,7 +18,7 @@ if ( ! file.exists(two_entries_gz_file)) {
     
     # Create gz file
     fd <- gzfile(two_entries_gz_file, 'w')
-    writeLines(txtfile, fd)
+    writeLines(readLines(txtfile), fd)
     close(fd)
 }
 testthat::expect_true(file.exists(two_entries_gz_file))
