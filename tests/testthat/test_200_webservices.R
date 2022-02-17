@@ -29,6 +29,8 @@ test.nci.cactus.wsChemicalIdentifierResolver <- function(conn) {
 # Set test context
 biodb::testContext("Tests of web services")
 
+source('gz_builder.R')
+
 # Instantiate Biodb
 biodb <- biodb::createBiodbTestInstance(ack=TRUE)
 
@@ -38,6 +40,7 @@ biodb$loadDefinitions(defFile)
 
 # Create connector
 conn <- biodb$getFactory()$createConn('nci.cactus')
+conn$setPropValSlot('urls', 'db.gz.url', two_entries_gz_file)
 
 # Run tests
 biodb::testThat('Web service wsChemicalIdentifierResolver works fine.',

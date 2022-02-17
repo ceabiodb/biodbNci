@@ -12,13 +12,15 @@
 #'
 #' @examples
 #' # Create an instance with default settings:
-#' mybiodb <- biodb::Biodb()
+#' mybiodb <- biodb::newInst()
 #'
 #' # Get a connector:
 #' conn <- mybiodb$getFactory()$createConn('nci.cactus')
 #'
 #' # Get the first entry
+#' \donttest{ # Getting one entry requires the download of the whole database.
 #' e <- conn$getEntry('749674')
+#' }
 #'
 #' # Terminate instance.
 #' mybiodb$terminate()
@@ -45,7 +47,7 @@ initialize=function(...) {
 #' See https://cactus.nci.nih.gov/chemical/structure_documentation for details.
 #' @param structid The submitted structure identifier.
 #' @param repr The wanted representation.
-#' @param xml: A flag for choosing the format returned by the web service
+#' @param xml A flag for choosing the format returned by the web service
 #' between plain text and XML.
 #' @param retfmt Use to set the format of the returned value. 'plain' will
 #' return the raw results from the server, as a character value. 'parsed' will
@@ -144,15 +146,7 @@ return(self$conv(cas, 'InChI'))
 
 private=list(
 
-doGetNbEntries=function(count=FALSE) {
-
-    # Replace the call below if you have a direct way (specific web service for
-    # a remote database, provided method or information for a local database)
-    # to count entries for your database.
-    return(callSuper(count=count))
-}
-
-,doGetEntryContentFromDb=function(id) {
+doGetEntryContentFromDb=function(id) {
 
     # Initialize return values
     content <- rep(NA_character_, length(id))
@@ -217,61 +211,59 @@ doGetNbEntries=function(count=FALSE) {
 
 ,doDownload=function() {
 
-    biodb::logInfo("Downloading biodbNci, a library for connecting to the National Cancer Institute (USA) CACTUS Database....")
-
-    # TODO Build the URL to the file to download
-    fileUrl <- c(self$getPropValSlot('urls', 'dwnld.url'),
-           'NCI-Open_2012-05-01.sdf.gz')
+    # Build the URL to the file to download
+    u <- self$getPropValSlot('urls', 'db.gz.url')
+    biodb::logInfo('Downloading NCI CACTUS database at "%s" ...', u)
+    cch <- self$getBiodb()$getPersistentCache()
     
-    # Transform it intoa biodb URL object
-    fileUrl <- BiodbUrl$new(url=fileUrl)
-
-    # Download the file using the biodb scheduler
-    biodb::logInfo0("Downloading \"", fileUrl$toString(), "\"...")
-    sched <- self$getBiodb()$getRequestScheduler()
-    sched$downloadFile(url=fileUrl, dest.file=self$getDownloadPath())
+    # Real URL
+    if (grepl('^([a-zA-Z]+://)', u)) {
+        ext <- self$getPropertyValue('dwnld.ext')
+        tmpFile <- tempfile("nci.cactus", tmpdir=cch$getTmpFolderPath(),
+            fileext=ext)
+        gz.url <- BiodbUrl$new(url=u)
+        sched <- self$getBiodb()$getRequestScheduler()
+        sched$downloadFile(url=gz.url, dest.file=tmpFile)
+        self$setDownloadedFile(tmpFile, action='move')
+        
+    # Path to local file
+    } else {
+        if ( ! file.exists(u))
+            biodb::error("Source file %s does not exist.", u)
+        self$setDownloadedFile(u, action='copy')
+    }
 }
 
 ,doExtractDownload=function() {
 
-    biodb::logInfo0("Extracting content of downloaded biodbNci, a library for connecting to the National Cancer Institute (USA) CACTUS Database....")
+    biodb::logInfo0("Extracting content of downloaded biodbNci, a library for ",
+        "connecting to the National Cancer Institute (USA) CACTUS Database....")
     cch <- self$getBiodb()$getPersistentCache()
  
-    # Open compressed file
+    # Expand compressed file
+    extract.dir <- cch$getTmpFolderPath()
+    txtfile <- file.path(extract.dir, "cactus_rdfs")
     fd <- gzfile(self$getDownloadPath(), 'r')
+    writeLines(readLines(fd), txtfile) # TODO To improve, takes more than 60min.
+    close(fd)
  
     # Delete existing cache files
     biodb::logDebug('Delete existing entry files in cache system.')
     ect <- self$getPropertyValue('entry.content.type')
     cch$deleteFiles(self$getCacheId(), ext=ect)
 
-    # Read all file content,
-    # and extract all individual SDF files.
-    content <- character()
-    msg <- 'Extracting NCI CACTUS SDF entry files'
-    prg <- biodb::Progress$new(biodb=self$getBiodb(), msg=msg)
-    while(TRUE) {
+    # Extract entries
+    biodb::logDebug0('Extract single entries from downloaded file "', txtfile,
+        '", into "', extract.dir, '".')
+    entryFiles <- extractEntries(normalizePath(txtfile),
+        normalizePath(extract.dir))
 
-        # Read one line
-        line <- readLines(fd, n=1)
-        if (length(line) == 0)
-            break
-        
-        # Store line
-        content <- c(content, line)
-        
-        # End of individual file
-        if (line == '$$$$') {
-            id <- as.character(as.integer(content[[1]]))
-            content <- paste(content, collapse="\n")
-            cch$saveContentToFile(content, cache.id=self$getCacheId(),
-                                  name=id, ext=ect)
-            content <- character()
-            prg$increment()
-        }
-    }
+    # Move extracted files into cache
+    cch$moveFilesIntoCache(unname(entryFiles), cache.id=self$getCacheId(),
+        name=names(entryFiles), ext=ect)
 
-    # Close file
-    close(fd)
+    # Remove extracted XML database file
+    biodb::logDebug('Delete extracted database.')
+    unlink(txtfile)
 }
 ))

@@ -21,13 +21,15 @@ https://cactus.nci.nih.gov/.
 }
 \examples{
 # Create an instance with default settings:
-mybiodb <- biodb::Biodb()
+mybiodb <- biodb::newInst()
 
 # Get a connector:
 conn <- mybiodb$getFactory()$createConn('nci.cactus')
 
 # Get the first entry
+\donttest{ # Getting one entry requires the download of the whole database.
 e <- conn$getEntry('749674')
+}
 
 # Terminate instance.
 mybiodb$terminate()
@@ -196,15 +198,15 @@ See https://cactus.nci.nih.gov/chemical/structure_documentation for details.
 
 \item{\code{repr}}{The wanted representation.}
 
+\item{\code{xml}}{A flag for choosing the format returned by the web service
+between plain text and XML.}
+
 \item{\code{retfmt}}{Use to set the format of the returned value. 'plain' will
 return the raw results from the server, as a character value. 'parsed' will
 return the parsed results, as an XML object. 'request' will return a
 BiodbRequest object representing the request as it would have been sent.
 'ids' will return a character vector containing the IDs of the matching
 entries.}
-
-\item{\code{xml:}}{A flag for choosing the format returned by the web service
-between plain text and XML.}
 }
 \if{html}{\out{</div>}}
 }
