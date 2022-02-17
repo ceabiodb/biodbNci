@@ -1,6 +1,8 @@
 # Set test context
 biodb::testContext("Generic tests")
 
+source('gz_builder.R')
+
 # Instantiate Biodb
 biodb <- biodb::createBiodbTestInstance(ack=TRUE)
 
@@ -10,6 +12,7 @@ biodb$loadDefinitions(defFile)
 
 # Create connector
 conn <- biodb$getFactory()$createConn('nci.cactus')
+conn$setPropValSlot('urls', 'db.gz.url', two_entries_gz_file)
 
 # Run generic tests
 #

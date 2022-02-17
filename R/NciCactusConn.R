@@ -219,17 +219,24 @@ doGetNbEntries=function(count=FALSE) {
 
     biodb::logInfo("Downloading biodbNci, a library for connecting to the National Cancer Institute (USA) CACTUS Database....")
 
+    print("================================ doDownload 1")
     # TODO Build the URL to the file to download
-    fileUrl <- c(self$getPropValSlot('urls', 'dwnld.url'),
-           'NCI-Open_2012-05-01.sdf.gz')
+    fileUrl <- self$getPropValSlot('urls', 'db.gz.url')
+    print("================================ doDownload 2")
+    print(fileUrl)
     
     # Transform it intoa biodb URL object
     fileUrl <- BiodbUrl$new(url=fileUrl)
+    print("================================ doDownload 3")
+    print(fileUrl)
 
     # Download the file using the biodb scheduler
     biodb::logInfo0("Downloading \"", fileUrl$toString(), "\"...")
+    print("================================ doDownload 10")
     sched <- self$getBiodb()$getRequestScheduler()
+    print("================================ doDownload 11")
     sched$downloadFile(url=fileUrl, dest.file=self$getDownloadPath())
+    print("================================ doDownload 12")
 }
 
 ,doExtractDownload=function() {
@@ -237,31 +244,37 @@ doGetNbEntries=function(count=FALSE) {
     biodb::logInfo0("Extracting content of downloaded biodbNci, a library for ",
         "connecting to the National Cancer Institute (USA) CACTUS Database....")
     cch <- self$getBiodb()$getPersistentCache()
-    txtfile <- "cactus_rdfs"
+    print("================================ doExtractDownload 1")
  
     # Expand compressed file
     extract.dir <- cch$getTmpFolderPath()
+    txtfile <- file.path(extract.dir, "cactus_rdfs")
     fd <- gzfile(self$getDownloadPath(), 'r')
     writeLines(readLines(fd), txtfile) # TODO To improve, takes more than 60min.
     close(fd)
+    print("================================ doExtractDownload 2")
  
     # Delete existing cache files
     biodb::logDebug('Delete existing entry files in cache system.')
     ect <- self$getPropertyValue('entry.content.type')
     cch$deleteFiles(self$getCacheId(), ext=ect)
+    print("================================ doExtractDownload 3")
 
     # Extract entries
     biodb::logDebug0('Extract single entries from downloaded file "', txtfile,
         '", into "', extract.dir, '".')
     entryFiles <- extractEntries(normalizePath(txtfile),
         normalizePath(extract.dir))
+    print("================================ doExtractDownload 4")
 
     # Move extracted files into cache
     cch$moveFilesIntoCache(unname(entryFiles), cache.id=self$getCacheId(),
         name=names(entryFiles), ext=ect)
+    print("================================ doExtractDownload 5")
 
     # Remove extracted XML database file
     biodb::logDebug('Delete extracted database.')
     unlink(txt_file)
+    print("================================ doExtractDownload 6")
 }
 ))
