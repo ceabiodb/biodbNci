@@ -66,7 +66,7 @@ initialize=function(...) {
              structid, repr)
     if (xml)
         url <- c(url, 'xml')
-    request <- self$makeRequest(method='get', url=BiodbUrl$new(url=url))
+    request <- self$makeRequest(method='get', url=biodb::BiodbUrl$new(url=url))
     if (retfmt == 'request')
         return(request)
 
@@ -146,21 +146,7 @@ return(self$conv(cas, 'InChI'))
 
 private=list(
 
-doGetEntryContentFromDb=function(id) {
-
-    # Initialize return values
-    content <- rep(NA_character_, length(id))
-
-    # TODO Implement retrieval of entry contents.
-
-    # Some debug message
-    if (length(content) > 0)
-        biodb::logDebug0("Content of first entry: ", content[[1]])
-
-    return(content)
-}
-
-,doGetEntryIds=function(max.results=NA_integer_) {
+doGetEntryIds=function(max.results=NA_integer_) {
     # Overrides super class' method.
 
     ids <- NA_character_
@@ -196,7 +182,7 @@ doGetEntryContentFromDb=function(id) {
     # entries to retrieve.
     u <- c(self$getPropValSlot('urls', 'base.url'), 'entries',
            paste(id, 'xml', sep='.'))
-    url <- BiodbUrl$new(url=u)$toString()
+    url <- biodb::BiodbUrl$new(url=u)$toString()
 
     return(url)
 }
@@ -221,7 +207,7 @@ doGetEntryContentFromDb=function(id) {
         ext <- self$getPropertyValue('dwnld.ext')
         tmpFile <- tempfile("nci.cactus", tmpdir=cch$getTmpFolderPath(),
             fileext=ext)
-        gz.url <- BiodbUrl$new(url=u)
+        gz.url <- biodb::BiodbUrl$new(url=u)
         sched <- self$getBiodb()$getRequestScheduler()
         sched$downloadFile(url=gz.url, dest.file=tmpFile)
         self$setDownloadedFile(tmpFile, action='move')
