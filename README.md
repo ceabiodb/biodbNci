@@ -25,7 +25,7 @@ devtools::install_github('pkrog/biodbNci', dependencies=TRUE)
 To instantiate a connector to NCI CACTUS, a library for connecting to the
 National Cancer Institute (USA) CACTUS Database, run:
 ```r
-mybiodb <- biodb::Biodb()
+mybiodb <- boidb::newInst()
 conn <- mybiodb$getFactory()$createConn('nci.cactus')
 mybiodb$terminate()
 ```
