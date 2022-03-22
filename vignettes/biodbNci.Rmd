@@ -16,13 +16,23 @@ output:
     toc_float:
       collapsed: false
   BiocStyle::pdf_document: default
+bibliography: references.bib
 ---
 
 # Purpose
 
 biodbNci is a *biodb* extension package that implements a connector to
 biodbNci, a library for connecting to the National Cancer Institute (USA)
-CACTUS Database.
+CACTUS API [@nci2022_CACTUS]. 
+
+# Installation
+
+Install using Bioconductor:
+```{r, eval=FALSE}
+if (!requireNamespace("BiocManager", quietly=TRUE))
+    install.packages("BiocManager")
+BiocManager::install('biodbNci')
+```
 
 # Initialization
 
@@ -48,12 +58,15 @@ Here is the code to instantiate a connector:
 conn <- mybiodb$getFactory()$createConn('nci.cactus')
 ```
 
-# Accessing entries
-
-To get the number of entries stored inside the database, run:
+For this vignette, we will avoid the downloading of the full NCI CACTUS
+database, and use instead an extract containing a few entries:
 ```{r}
-conn$getNbEntries()
+dbExtract <- system.file("extdata", 'generated', "cactus_extract.txt.gz",
+    package="biodbNci")
+conn$setPropValSlot('urls', 'db.gz.url', dbExtract)
 ```
+
+# Accessing entries
 
 To get some of the first entry IDs (accession numbers) from the database, run:
 ```{r}
@@ -99,3 +112,11 @@ ensure release of resources (file handles, database connection, etc):
 ```{r}
 mybiodb$terminate()
 ```
+
+# Session information
+
+```{r}
+sessionInfo()
+```
+
+# References
