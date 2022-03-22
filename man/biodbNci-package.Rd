@@ -6,7 +6,7 @@
 \alias{biodbNci-package}
 \title{biodbNci: biodbNci, a library for connecting to biodbNci, a library for connecting to the National Cancer Institute (USA) CACTUS Database}
 \description{
-The biodbNci library is an extension of the biodb framework package, that provides access to biodbNci, a library for connecting to the National Cancer Institute (USA) CACTUS Database. It allows to retrieve entries by their accession number, and run specific web services.
+The biodbNci library is an extension of the biodb framework package. It provides access to biodbNci, a library for connecting to the National Cancer Institute (USA) CACTUS Database. It allows to retrieve entries by their accession number, and run specific web services.
 }
 \details{
 See vignette biodbNci:\preformatted{vignette('biodbNci', package='biodbNci')
@@ -16,6 +16,6 @@ See vignette biodbNci:\preformatted{vignette('biodbNci', package='biodbNci')
 \link{NciCactusConn}.
 }
 \author{
-\strong{Maintainer}: Pierrick Roger \email{pierrick.roger@cea.fr}
+\strong{Maintainer}: Pierrick Roger \email{pierrick.roger@cea.fr} (\href{https://orcid.org/0000-0001-8177-4873}{ORCID})
 
 }

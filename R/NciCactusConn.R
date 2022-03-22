@@ -17,10 +17,14 @@
 #' # Get a connector:
 #' conn <- mybiodb$getFactory()$createConn('nci.cactus')
 #'
-#' # Get the first entry
-#' \donttest{ # Getting one entry requires the download of the whole database.
+#' # Use a database extract in order to avoid the downloading of the whole
+#' # database.
+#' dbExtract <- system.file("extdata", 'generated', "cactus_extract.txt.gz",
+#'     package="biodbNci")
+#' conn$setPropValSlot('urls', 'db.gz.url', dbExtract)
+#'
+#' # Get an entry
 #' e <- conn$getEntry('749674')
-#' }
 #'
 #' # Terminate instance.
 #' mybiodb$terminate()
@@ -63,7 +67,7 @@ initialize=function(...) {
     
     # Build request
     url <- c(self$getPropValSlot('urls', 'ws.url'), 'chemical', 'structure',
-             structid, repr)
+        structid, repr)
     if (xml)
         url <- c(url, 'xml')
     request <- self$makeRequest(method='get', url=biodb::BiodbUrl$new(url=url))
@@ -147,19 +151,17 @@ return(self$conv(cas, 'InChI'))
 private=list(
 
 doGetEntryIds=function(max.results=NA_integer_) {
-    # Overrides super class' method.
 
     ids <- NA_character_
- 
+
     # Download
     self$download()
 
     # Get IDs from cache
     cch <- self$getBiodb()$getPersistentCache()
     ids <- cch$listFiles(self$getCacheId(),
-                         ext=self$getPropertyValue('entry.content.type'),
-                         extract.name=TRUE)
-    
+        ext=self$getPropertyValue('entry.content.type'), extract.name=TRUE)
+
     return(ids)
 }
 
@@ -181,7 +183,7 @@ doGetEntryIds=function(max.results=NA_integer_) {
     # individual entry or may be able to write just one or a few URL for all
     # entries to retrieve.
     u <- c(self$getPropValSlot('urls', 'base.url'), 'entries',
-           paste(id, 'xml', sep='.'))
+        paste(id, 'xml', sep='.'))
     url <- biodb::BiodbUrl$new(url=u)$toString()
 
     return(url)
